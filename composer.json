@@ -1,0 +1,65 @@
+{
+    "name": "jobmetric/laravel-membership",
+    "description": "This is a website membership management package for Laravel that you can use in your projects.",
+    "type": "library",
+    "license": "MIT",
+    "keywords": [
+        "laravel",
+        "jobmetric",
+        "package",
+        "membership",
+        "membership management",
+        "membership system",
+        "members",
+        "users",
+        "accounts"
+    ],
+    "homepage": "https://doc.jobmetric.net/package/laravel-membership",
+    "authors": [
+        {
+            "name": "Majid Mohammadian",
+            "email": "majeedmohammadian@gmail.com",
+            "homepage": "https://www.linkedin.com/in/majidmohammadian/",
+            "role": "Full Stack Developer"
+        }
+    ],
+    "require": {
+        "php": ">=8.0.1",
+        "laravel/framework": ">=9.19",
+        "jobmetric/laravel-package-core": "^1.7",
+        "spatie/laravel-query-builder": "^5.7"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.1"
+    },
+    "autoload": {
+        "files": [
+            "src/helpers.php"
+        ],
+        "psr-4": {
+            "JobMetric\\Membership\\": "src/",
+            "JobMetric\\Membership\\Factories\\": "database/factories/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "JobMetric\\Membership\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "JobMetric\\Membership\\MembershipServiceProvider"
+            ],
+            "aliases": {
+                "Membership": "JobMetric\\Membership\\Facades\\Membership"
+            }
+        }
+    },
+    "minimum-stability": "stable",
+    "support": {
+        "issues": "https://github.com/jobmetric/laravel-membership/issues",
+        "forum": "https://twitter.com/jobmetric",
+        "source": "https://github.com/jobmetric/laravel-membership"
+    }
+}
