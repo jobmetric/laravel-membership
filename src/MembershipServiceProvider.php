@@ -22,6 +22,6 @@ class MembershipServiceProvider extends PackageCoreServiceProvider
             ->hasConfig()
             ->hasMigration()
             ->hasTranslation()
-            ->registerClass('Membership', \JobMetric\Membership\Membership::class);
+            ->registerClass('Membership', Membership::class);
     }
 }
