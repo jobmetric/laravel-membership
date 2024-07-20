@@ -15,11 +15,9 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create(config('membership.tables.member'), function (Blueprint $table) {
-            $table->id();
-
-            $table->foreignId('user_id')->index()->constrained()->cascadeOnDelete()->cascadeOnUpdate();
+            $table->morphs('personable');
             /**
-             * The user_id field is used to store the user_id of the member.
+             * The personable field is used to store the model that the member belongs to.
              */
 
             $table->morphs('memberable');
@@ -32,14 +30,9 @@ return new class extends Migration {
              * The collection field is used to store the collection of the members.
              */
 
-            $table->softDeletes();
+            $table->timestamp('created_at');
             /**
-             * The softDeletes trait is used to store the deleted_at field.
-             */
-
-            $table->timestamps();
-            /**
-             * The timestamp's trait is used to store the created_at and updated_at fields.
+             * The created_at field is used to store the date and time the member was created.
              */
         });
 
