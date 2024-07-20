@@ -20,7 +20,8 @@ class MemberFactory extends Factory
     public function definition(): array
     {
         return [
-            'user_id' => null,
+            'personable_type' => null,
+            'personable_id' => null,
             'memberable_type' => null,
             'memberable_id' => null,
             'collection' => null,
@@ -28,16 +29,18 @@ class MemberFactory extends Factory
     }
 
     /**
-     * set user id
+     * set personable
      *
-     * @param int $user_id
+     * @param string $personable_type
+     * @param int $personable_id
      *
      * @return static
      */
-    public function setUserId(int $user_id): static
+    public function setPersonable(string $personable_type, int $personable_id): static
     {
         return $this->state(fn(array $attributes) => [
-            'user_id' => $user_id
+            'personable_type' => $personable_type,
+            'personable_id' => $personable_id
         ]);
     }
 
