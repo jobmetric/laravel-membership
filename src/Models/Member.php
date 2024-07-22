@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Relations\Pivot;
+use JobMetric\Membership\Events\MemberableResourceEvent;
+use JobMetric\Membership\Events\PersonableResourceEvent;
+use JobMetric\PackageCore\HasDynamicRelations;
 
 /**
  * JobMetric\Membership\Models\Member
@@ -19,7 +22,7 @@ use Illuminate\Database\Eloquent\Relations\Pivot;
  */
 class Member extends Pivot
 {
-    use HasFactory;
+    use HasFactory, HasDynamicRelations;
 
     protected $fillable = [
         'personable_type',
@@ -78,5 +81,31 @@ class Member extends Pivot
     public function scopeOfCollection(Builder $query, string $collection): Builder
     {
         return $query->where('collection', $collection);
+    }
+
+    /**
+     * Get the personable resource attribute.
+     *
+     * @return mixed|null
+     */
+    public function getPersonableResourceAttribute(): mixed
+    {
+        $event = new PersonableResourceEvent($this->personable);
+        event($event);
+
+        return $event->resource;
+    }
+
+    /**
+     * Get the memberable resource attribute.
+     *
+     * @return mixed|null
+     */
+    public function getMemberableResourceAttribute(): mixed
+    {
+        $event = new MemberableResourceEvent($this->memberable);
+        event($event);
+
+        return $event->resource;
     }
 }
