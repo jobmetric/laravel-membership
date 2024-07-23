@@ -5,17 +5,17 @@ namespace JobMetric\Membership\Events;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
-class MembershipStoredEvent
+class MembershipRenewEvent
 {
     public Model $person;
     public Model $memberable;
     public string $collection;
-    public Carbon|null $expired_at;
+    public Carbon $expired_at;
 
     /**
      * Create a new event instance.
      */
-    public function __construct(Model $person, Model $memberable, string $collection, Carbon $expired_at = null)
+    public function __construct(Model $person, Model $memberable, string $collection, Carbon $expired_at)
     {
         $this->person = $person;
         $this->memberable = $memberable;
