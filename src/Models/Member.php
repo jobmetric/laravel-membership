@@ -2,6 +2,7 @@
 
 namespace JobMetric\Membership\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
@@ -18,7 +19,9 @@ use JobMetric\PackageCore\HasDynamicRelations;
  * @property string memberable_type
  * @property int memberable_id
  * @property string collection
- * @property string created_at
+ * @property Carbon expired_at
+ * @property Carbon created_at
+ * @property Carbon updated_at
  */
 class Member extends Pivot
 {
@@ -29,7 +32,8 @@ class Member extends Pivot
         'personable_id',
         'memberable_type',
         'memberable_id',
-        'collection'
+        'collection',
+        'expires_at'
     ];
 
     /**
@@ -42,7 +46,8 @@ class Member extends Pivot
         'personable_id' => 'integer',
         'memberable_type' => 'string',
         'memberable_id' => 'integer',
-        'collection' => 'string'
+        'collection' => 'string',
+        'expires_at' => 'datetime'
     ];
 
     public function getTable()
@@ -57,7 +62,7 @@ class Member extends Pivot
      */
     public function personable(): MorphTo
     {
-        return $this->morphTo(__FUNCTION__, 'personable_type', 'personable_id');
+        return $this->morphTo();
     }
 
     /**
@@ -67,7 +72,7 @@ class Member extends Pivot
      */
     public function memberable(): MorphTo
     {
-        return $this->morphTo(__FUNCTION__, 'memberable_type', 'memberable_id');
+        return $this->morphTo();
     }
 
     /**
@@ -81,6 +86,30 @@ class Member extends Pivot
     public function scopeOfCollection(Builder $query, string $collection): Builder
     {
         return $query->where('collection', $collection);
+    }
+
+    /**
+     * Set the scope of a query to include only those that have expired.
+     *
+     * @param Builder $query
+     *
+     * @return Builder
+     */
+    public function scopeExpired(Builder $query): Builder
+    {
+        return $query->where('expires_at', '<', now());
+    }
+
+    /**
+     * Set the scope of a query to include only those that have not expired.
+     *
+     * @param Builder $query
+     *
+     * @return Builder
+     */
+    public function scopeNotExpired(Builder $query): Builder
+    {
+        return $query->where('expires_at', '>=', now());
     }
 
     /**
