@@ -2,14 +2,18 @@
 
 namespace JobMetric\Membership;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use JobMetric\Membership\Events\MembershipForgetEvent;
+use JobMetric\Membership\Events\MembershipRenewEvent;
 use JobMetric\Membership\Events\MembershipStoredEvent;
+use JobMetric\Membership\Events\MembershipUpdateExpiredAtEvent;
 use JobMetric\Membership\Exceptions\MemberCollectionNotAllowedException;
 use JobMetric\Membership\Exceptions\MemberCollectionTypeNotMatchException;
+use JobMetric\Membership\Exceptions\MemberExpiredAtIsPastException;
 use JobMetric\Membership\Exceptions\ModelMemberContractNotFoundException;
 use JobMetric\Membership\Exceptions\TraitCanMemberNotFoundInModelException;
 use JobMetric\Membership\Http\Resources\MemberResource;
@@ -68,14 +72,19 @@ trait HasMember
      *
      * @param Model $person
      * @param string $collection
+     * @param Carbon|null $expired_at
      *
      * @return static
      * @throws Throwable
      */
-    public function memberIt(Model $person, string $collection): static
+    public function storeMember(Model $person, string $collection, Carbon $expired_at = null): static
     {
         if (!in_array('JobMetric\Membership\CanMember', class_uses($person))) {
             throw new TraitCanMemberNotFoundInModelException(get_class($person));
+        }
+
+        if ($expired_at && $expired_at->isPast()) {
+            throw new MemberExpiredAtIsPastException($expired_at);
         }
 
         $allowMemberCollection = $this->allowMemberCollection();
@@ -86,8 +95,10 @@ trait HasMember
 
         if ($allowMemberCollection[$collection] == 'single') {
             if ($this->member()->where([
-                'collection' => $collection
-            ])->exists()) {
+                'collection' => $collection,
+            ])->where(function ($q) {
+                $q->where('expired_at', '>', Carbon::now())->orWhereNull('expired_at');
+            })->exists()) {
                 return $this;
             }
         } elseif ($allowMemberCollection[$collection] == 'multiple') {
@@ -95,20 +106,24 @@ trait HasMember
                 'personable_type' => get_class($person),
                 'personable_id' => $person->getKey(),
                 'collection' => $collection,
-            ])->exists()) {
+            ])->where(function ($q) {
+                $q->where('expired_at', '>', Carbon::now())->orWhereNull('expired_at');
+            })->exists()) {
                 return $this;
             }
         } else {
             throw new MemberCollectionTypeNotMatchException(self::class, $collection);
         }
 
-        $this->member()->create([
+        $this->member()->updateOrInsert([
             'personable_type' => get_class($person),
             'personable_id' => $person->getKey(),
             'collection' => $collection,
+        ], [
+            'expired_at' => $expired_at,
         ]);
 
-        event(new MembershipStoredEvent($person, $this, $collection));
+        event(new MembershipStoredEvent($person, $this, $collection, $expired_at));
 
         return $this;
     }
@@ -122,7 +137,7 @@ trait HasMember
      * @return static
      * @throws Throwable
      */
-    public function memberForget(Model $person, string $collection): static
+    public function forgetMember(Model $person, string $collection): static
     {
         if (!in_array('JobMetric\Membership\CanMember', class_uses($person))) {
             throw new TraitCanMemberNotFoundInModelException(get_class($person));
@@ -146,7 +161,7 @@ trait HasMember
     }
 
     /**
-     * check member
+     * has member
      *
      * @param Model $person
      * @param string $collection
@@ -170,18 +185,111 @@ trait HasMember
             'personable_type' => get_class($person),
             'personable_id' => $person->getKey(),
             'collection' => $collection,
-        ])->exists();
+        ])->where(function ($q) {
+            $q->where('expired_at', '>', Carbon::now())->orWhereNull('expired_at');
+        })->exists();
+    }
+
+    /**
+     * renew member
+     *
+     * @param Model $person
+     * @param string $collection
+     * @param Carbon|null $expired_at
+     *
+     * @return bool
+     * @throws Throwable
+     */
+    public function renewMember(Model $person, string $collection, Carbon $expired_at = null): bool
+    {
+        if (!in_array('JobMetric\Membership\CanMember', class_uses($person))) {
+            throw new TraitCanMemberNotFoundInModelException(get_class($person));
+        }
+
+        if ($expired_at && $expired_at->isPast()) {
+            throw new MemberExpiredAtIsPastException($expired_at);
+        }
+
+        $allowMemberCollection = $this->allowMemberCollection();
+
+        if (!in_array($collection, array_keys($allowMemberCollection))) {
+            throw new MemberCollectionNotAllowedException(self::class, $collection);
+        }
+
+        if (!$this->member()->where([
+            'personable_type' => get_class($person),
+            'personable_id' => $person->getKey(),
+            'collection' => $collection,
+        ])->exists()) {
+            return false;
+        }
+
+        $this->member()->updateOrInsert([
+            'personable_type' => get_class($person),
+            'personable_id' => $person->getKey(),
+            'collection' => $collection,
+        ], [
+            'expired_at' => $expired_at,
+        ]);
+
+        event(new MembershipRenewEvent($person, $this, $collection, $expired_at));
+
+        return true;
+    }
+
+    /**
+     * update expired at member
+     *
+     * @param Model $person
+     * @param string $collection
+     * @param Carbon|null $expired_at
+     *
+     * @return bool
+     * @throws Throwable
+     */
+    public function updateExpiredAtMember(Model $person, string $collection, Carbon $expired_at = null): bool
+    {
+        if (!in_array('JobMetric\Membership\CanMember', class_uses($person))) {
+            throw new TraitCanMemberNotFoundInModelException(get_class($person));
+        }
+
+        $allowMemberCollection = $this->allowMemberCollection();
+
+        if (!in_array($collection, array_keys($allowMemberCollection))) {
+            throw new MemberCollectionNotAllowedException(self::class, $collection);
+        }
+
+        if (!$this->member()->where([
+            'personable_type' => get_class($person),
+            'personable_id' => $person->getKey(),
+            'collection' => $collection,
+        ])->exists()) {
+            return false;
+        }
+
+        $this->member()->updateOrInsert([
+            'personable_type' => get_class($person),
+            'personable_id' => $person->getKey(),
+            'collection' => $collection,
+        ], [
+            'expired_at' => $expired_at,
+        ]);
+
+        event(new MembershipUpdateExpiredAtEvent($person, $this, $collection, $expired_at));
+
+        return true;
     }
 
     /**
      * get person
      *
      * @param string|null $collection
+     * @param bool $is_expired
      *
-     * @return AnonymousResourceCollection|null
+     * @return AnonymousResourceCollection
      * @throws Throwable
      */
-    public function getPerson(string $collection = null): ?AnonymousResourceCollection
+    public function getPerson(string $collection = null, bool $is_expired = false): AnonymousResourceCollection
     {
         $allowMemberCollection = $this->allowMemberCollection();
 
@@ -189,16 +297,18 @@ trait HasMember
             throw new MemberCollectionNotAllowedException(self::class, $collection);
         }
 
-        $members = $this->members()->get();
+        $members = $this->members()->where(function ($q) use ($collection, $is_expired) {
+            if ($collection) {
+                $q->where('collection', $collection);
+            }
 
-        if ($collection) {
-            $members = $members->where('collection', $collection);
-        }
+            if ($is_expired) {
+                $q->where('expired_at', '<', Carbon::now());
+            } else {
+                $q->where('expired_at', '>', Carbon::now())->orWhereNull('expired_at');
+            }
+        })->get();
 
-        if ($members) {
-            return MemberResource::collection($members);
-        }
-
-        return null;
+        return MemberResource::collection($members);
     }
 }
