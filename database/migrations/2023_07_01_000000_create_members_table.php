@@ -30,9 +30,14 @@ return new class extends Migration {
              * The collection field is used to store the collection of the members.
              */
 
-            $table->timestamp('created_at');
+            $table->dateTime('expired_at')->nullable();
             /**
-             * The created_at field is used to store the date and time the member was created.
+             * The expired_at field is used to store the expired at time of the member.
+             */
+
+            $table->timestamps();
+            /**
+             * The timestamp's field is used to store the created and updated at time of the member.
              */
         });
 
