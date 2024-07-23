@@ -11,6 +11,9 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * @property mixed memberable_type
  * @property mixed memberable_id
  * @property mixed collection
+ * @property mixed expired_at
+ * @property mixed created_at
+ * @property mixed updated_at
  * @property mixed personable_resource
  * @property mixed memberable_resource
  */
@@ -29,6 +32,9 @@ class MemberResource extends JsonResource
             'memberable_type' => $this->memberable_type,
             'memberable_id' => $this->memberable_id,
             'collection' => $this->collection,
+            'expired_at' => $this->expired_at,
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
 
             'personable' => $this->personable_resource,
             'memberable' => $this->memberable_resource,
