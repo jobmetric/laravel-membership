@@ -6,6 +6,10 @@ use Illuminate\Support\Facades\Facade;
 
 /**
  * @see \JobMetric\Membership\Membership
+ *
+ * @method static \Spatie\QueryBuilder\QueryBuilder query(array $filter = [], array $with = [])
+ * @method static \Illuminate\Http\Resources\Json\AnonymousResourceCollection paginate(array $filter = [], int $page_limit = 15, array $with = [])
+ * @method static \Illuminate\Http\Resources\Json\AnonymousResourceCollection all(array $filter = [], array $with = [])
  */
 class Membership extends Facade
 {
@@ -16,6 +20,6 @@ class Membership extends Facade
      */
     protected static function getFacadeAccessor(): string
     {
-        return 'Membership';
+        return \JobMetric\Membership\Membership::class;
     }
 }
