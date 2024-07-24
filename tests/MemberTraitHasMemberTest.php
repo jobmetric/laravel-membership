@@ -224,6 +224,33 @@ class MemberTraitHasMemberTest extends BaseMember
      */
     public function test_update_expired_at(): void
     {
+        $order = $this->addOrder();
+        $user = $this->addUser();
+
+        $order->storeMember($user, 'owner');
+
+        $time = now()->addDays(30);
+        $memberUpdate = $order->updateExpiredAtMember($user, 'owner', $time);
+
+        $this->assertIsBool($memberUpdate);
+        $this->assertTrue($memberUpdate);
+
+        $this->assertDatabaseHas('members', [
+            'personable_type' => User::class,
+            'personable_id' => $user->id,
+            'memberable_type' => Order::class,
+            'memberable_id' => $order->id,
+            'collection' => 'owner',
+            'expired_at' => $time
+        ]);
+
+        // update expired_at past
+        $time = now()->subDays(30);
+
+        $memberUpdate = $order->updateExpiredAtMember($user, 'owner', $time);
+
+        $this->assertIsBool($memberUpdate);
+        $this->assertTrue($memberUpdate);
     }
 
     /**
