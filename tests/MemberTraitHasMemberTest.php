@@ -5,6 +5,7 @@ namespace JobMetric\Membership\Tests;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
+use JobMetric\Membership\Exceptions\MemberExpiredAtIsPastException;
 use JobMetric\Membership\Http\Resources\MemberResource;
 use Throwable;
 
@@ -188,6 +189,34 @@ class MemberTraitHasMemberTest extends BaseMember
      */
     public function test_renew(): void
     {
+        $order = $this->addOrder();
+        $user = $this->addUser();
+
+        $order->storeMember($user, 'owner');
+
+        $time = now()->addDays(30);
+        $memberRenew = $order->renewMember($user, 'owner', $time);
+
+        $this->assertIsBool($memberRenew);
+        $this->assertTrue($memberRenew);
+
+        $this->assertDatabaseHas('members', [
+            'personable_type' => User::class,
+            'personable_id' => $user->id,
+            'memberable_type' => Order::class,
+            'memberable_id' => $order->id,
+            'collection' => 'owner',
+            'expired_at' => $time
+        ]);
+
+        // renew past expired_at
+        $time = now()->subDays(30);
+
+        try {
+            $order->renewMember($user, 'owner', $time);
+        } catch (Throwable $e) {
+            $this->assertInstanceOf(MemberExpiredAtIsPastException::class, $e);
+        }
     }
 
     /**
