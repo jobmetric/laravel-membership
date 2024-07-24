@@ -2,6 +2,7 @@
 
 namespace JobMetric\Membership\Factories;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use JobMetric\Membership\Models\Member;
 
@@ -25,6 +26,7 @@ class MemberFactory extends Factory
             'memberable_type' => null,
             'memberable_id' => null,
             'collection' => null,
+            'expired_at' => Carbon::now()->addDays(30),
         ];
     }
 
@@ -71,6 +73,20 @@ class MemberFactory extends Factory
     {
         return $this->state(fn(array $attributes) => [
             'collection' => $collection
+        ]);
+    }
+
+    /**
+     * set expired_at
+     *
+     * @param Carbon $expired_at
+     *
+     * @return static
+     */
+    public function setExpiredAt(Carbon $expired_at): static
+    {
+        return $this->state(fn(array $attributes) => [
+            'expired_at' => $expired_at
         ]);
     }
 }
