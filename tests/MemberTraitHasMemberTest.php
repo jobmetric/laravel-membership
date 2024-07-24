@@ -5,6 +5,8 @@ namespace JobMetric\Membership\Tests;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use JobMetric\Extension\Http\Resources\ExtensionResource;
 use JobMetric\Membership\Exceptions\MemberExpiredAtIsPastException;
 use JobMetric\Membership\Http\Resources\MemberResource;
 use Throwable;
@@ -258,5 +260,17 @@ class MemberTraitHasMemberTest extends BaseMember
      */
     public function test_get_person(): void
     {
+        $order = $this->addOrder();
+        $user = $this->addUser();
+
+        $order->storeMember($user, 'owner');
+
+        $persons = $order->getPerson('owner');
+
+        $this->assertCount(1, $persons);
+
+        $persons->each(function ($person) {
+            $this->assertInstanceOf(MemberResource::class, $person);
+        });
     }
 }
