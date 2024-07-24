@@ -3,10 +3,7 @@
 namespace JobMetric\Membership\Tests;
 
 use App\Models\Order;
-use App\Models\Product;
 use App\Models\User;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use JobMetric\Extension\Http\Resources\ExtensionResource;
 use JobMetric\Membership\Exceptions\MemberExpiredAtIsPastException;
 use JobMetric\Membership\Http\Resources\MemberResource;
 use Throwable;
