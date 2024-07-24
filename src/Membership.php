@@ -106,12 +106,18 @@ class Membership
     {
         $member_expired = Member::query()->where('expired_at', '<', now())->get();
 
-        if ($member_expired) {
+        if ($member_expired->count()) {
             $member_expired->each(function ($member) {
                 /**
                  * @var Member $member
                  */
-                $member->delete();
+                Member::query()->where([
+                    'personable_type' => $member->personable_type,
+                    'personable_id' => $member->personable_id,
+                    'memberable_type' => $member->memberable_type,
+                    'memberable_id' => $member->memberable_id,
+                    'collection' => $member->collection,
+                ])->delete();
 
                 event(new MembershipRemoveExpiredEvent($member));
             });
