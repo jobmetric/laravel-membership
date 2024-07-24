@@ -22,6 +22,7 @@ use JobMetric\PackageCore\HasDynamicRelations;
  * @property Carbon expired_at
  * @property Carbon created_at
  * @property Carbon updated_at
+ * @method static create(array $array)
  */
 class Member extends Pivot
 {
@@ -33,7 +34,7 @@ class Member extends Pivot
         'memberable_type',
         'memberable_id',
         'collection',
-        'expires_at'
+        'expired_at'
     ];
 
     /**
@@ -47,7 +48,7 @@ class Member extends Pivot
         'memberable_type' => 'string',
         'memberable_id' => 'integer',
         'collection' => 'string',
-        'expires_at' => 'datetime'
+        'expired_at' => 'datetime'
     ];
 
     public function getTable()
@@ -97,7 +98,7 @@ class Member extends Pivot
      */
     public function scopeExpired(Builder $query): Builder
     {
-        return $query->where('expires_at', '<', now());
+        return $query->where('expired_at', '<', now());
     }
 
     /**
@@ -109,7 +110,7 @@ class Member extends Pivot
      */
     public function scopeNotExpired(Builder $query): Builder
     {
-        return $query->where('expires_at', '>=', now());
+        return $query->where('expired_at', '>=', now());
     }
 
     /**

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use JobMetric\Layout\Http\Resources\LayoutResource;
 use JobMetric\Membership\Events\MembershipForgetEvent;
 use JobMetric\Membership\Events\MembershipRenewEvent;
 use JobMetric\Membership\Events\MembershipStoredEvent;
@@ -74,10 +75,10 @@ trait HasMember
      * @param string $collection
      * @param Carbon|null $expired_at
      *
-     * @return static
+     * @return array
      * @throws Throwable
      */
-    public function storeMember(Model $person, string $collection, Carbon $expired_at = null): static
+    public function storeMember(Model $person, string $collection, Carbon $expired_at = null): array
     {
         if (!in_array('JobMetric\Membership\CanMember', class_uses($person))) {
             throw new TraitCanMemberNotFoundInModelException(get_class($person));
@@ -99,7 +100,16 @@ trait HasMember
             ])->where(function ($q) {
                 $q->where('expired_at', '>', Carbon::now())->orWhereNull('expired_at');
             })->exists()) {
-                return $this;
+                return [
+                    'ok' => false,
+                    'message' => trans('membership::base.validation.errors'),
+                    'errors' => [
+                        trans('membership::base.validation.member_collection_exists', [
+                            'collection' => $collection
+                        ]),
+                    ],
+                    'status' => 400,
+                ];
             }
         } elseif ($allowMemberCollection[$collection] == 'multiple') {
             if ($this->member()->where([
@@ -109,23 +119,38 @@ trait HasMember
             ])->where(function ($q) {
                 $q->where('expired_at', '>', Carbon::now())->orWhereNull('expired_at');
             })->exists()) {
-                return $this;
+                return [
+                    'ok' => false,
+                    'message' => trans('membership::base.validation.errors'),
+                    'errors' => [
+                        trans('membership::base.validation.member_collection_exists', [
+                            'collection' => $collection
+                        ]),
+                    ],
+                    'status' => 400,
+                ];
             }
         } else {
             throw new MemberCollectionTypeNotMatchException(self::class, $collection);
         }
 
-        $this->member()->updateOrInsert([
+        $member = MemberModel::create([
             'personable_type' => get_class($person),
             'personable_id' => $person->getKey(),
+            'memberable_type' => self::class,
+            'memberable_id' => $this->getKey(),
             'collection' => $collection,
-        ], [
             'expired_at' => $expired_at,
         ]);
 
         event(new MembershipStoredEvent($person, $this, $collection, $expired_at));
 
-        return $this;
+        return [
+            'ok' => true,
+            'message' => trans('membership::base.messages.created'),
+            'data' => MemberResource::make($member),
+            'status' => 201
+        ];
     }
 
     /**
