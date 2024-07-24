@@ -60,10 +60,10 @@ trait CanMember
      * @param string $collection
      * @param Carbon|null $expired_at
      *
-     * @return static
+     * @return array
      * @throws Throwable
      */
-    public function storePerson(Model $memberable, string $collection, Carbon $expired_at = null): static
+    public function storePerson(Model $memberable, string $collection, Carbon $expired_at = null): array
     {
         if (!in_array('JobMetric\Membership\HasMember', class_uses($memberable))) {
             throw new TraitHasMemberNotFoundInModelException(get_class($memberable));
@@ -87,7 +87,16 @@ trait CanMember
             ])->where(function ($q) {
                 $q->where('expired_at', '>', Carbon::now())->orWhereNull('expired_at');
             })->exists()) {
-                return $this;
+                return [
+                    'ok' => false,
+                    'message' => trans('membership::base.validation.errors'),
+                    'errors' => [
+                        trans('membership::base.validation.member_collection_exists', [
+                            'collection' => $collection
+                        ]),
+                    ],
+                    'status' => 400,
+                ];
             }
         } elseif ($allowMemberCollection[$collection] == 'multiple') {
             if (Member::query()->where([
@@ -99,23 +108,38 @@ trait CanMember
             ])->where(function ($q) {
                 $q->where('expired_at', '>', Carbon::now())->orWhereNull('expired_at');
             })->exists()) {
-                return $this;
+                return [
+                    'ok' => false,
+                    'message' => trans('membership::base.validation.errors'),
+                    'errors' => [
+                        trans('membership::base.validation.member_collection_exists', [
+                            'collection' => $collection
+                        ]),
+                    ],
+                    'status' => 400,
+                ];
             }
         } else {
             throw new MemberCollectionTypeNotMatchException(get_class($memberable), $collection);
         }
 
-        $this->person()->updateOrInsert([
+        $member = MemberModel::create([
+            'personable_type' => self::class,
+            'personable_id' => $this->getKey(),
             'memberable_type' => get_class($memberable),
             'memberable_id' => $memberable->getKey(),
             'collection' => $collection,
-        ], [
             'expired_at' => $expired_at,
         ]);
 
         event(new MembershipStoredEvent($this, $memberable, $collection, $expired_at));
 
-        return $this;
+        return [
+            'ok' => true,
+            'message' => trans('membership::base.messages.created'),
+            'data' => MemberResource::make($member),
+            'status' => 201
+        ];
     }
 
     /**
@@ -124,10 +148,10 @@ trait CanMember
      * @param Model $memberable
      * @param string $collection
      *
-     * @return static
+     * @return array
      * @throws Throwable
      */
-    public function forgetPerson(Model $memberable, string $collection): static
+    public function forgetPerson(Model $memberable, string $collection): array
     {
         if (!in_array('JobMetric\Membership\HasMember', class_uses($memberable))) {
             throw new TraitHasMemberNotFoundInModelException(get_class($memberable));
@@ -139,7 +163,32 @@ trait CanMember
             throw new MemberCollectionNotAllowedException(get_class($memberable), $collection);
         }
 
-        $this->person()->where([
+        $member = MemberModel::query()->where([
+            'personable_type' => self::class,
+            'personable_id' => $this->getKey(),
+            'memberable_type' => get_class($memberable),
+            'memberable_id' => $memberable->getKey(),
+            'collection' => $collection,
+        ])->first();
+
+        if (!$member) {
+            return [
+                'ok' => false,
+                'message' => trans('membership::base.validation.errors'),
+                'errors' => [
+                    trans('membership::base.validation.member_collection_not_found', [
+                        'collection' => $collection
+                    ]),
+                ],
+                'status' => 404,
+            ];
+        }
+
+        $data = MemberResource::make($member);
+
+        MemberModel::query()->where([
+            'personable_type' => self::class,
+            'personable_id' => $this->getKey(),
             'memberable_type' => get_class($memberable),
             'memberable_id' => $memberable->getKey(),
             'collection' => $collection,
@@ -147,7 +196,12 @@ trait CanMember
 
         event(new MembershipForgetEvent($this, $memberable, $collection));
 
-        return $this;
+        return [
+            'ok' => true,
+            'message' => trans('membership::base.messages.deleted'),
+            'data' => $data,
+            'status' => 200
+        ];
     }
 
     /**
