@@ -40,8 +40,6 @@ return new class extends Migration {
              * The timestamp's field is used to store the created and updated at time of the member.
              */
         });
-
-        cache()->forget('membership');
     }
 
     /**
@@ -52,7 +50,5 @@ return new class extends Migration {
     public function down(): void
     {
         Schema::dropIfExists(config('membership.tables.member'));
-
-        cache()->forget('membership');
     }
 };
