@@ -15,6 +15,7 @@ return [
     'validation' => [
         'errors' => 'Validation errors occurred.',
         'member_collection_exists' => 'The :collection collection already exists.',
+        'member_collection_not_found' => 'The :collection collection not found.',
     ],
 
     "exceptions" => [
@@ -28,6 +29,7 @@ return [
 
     'messages' => [
         'created' => 'The member was created successfully.',
+        'deleted' => 'The member was deleted successfully.',
     ]
 
 ];

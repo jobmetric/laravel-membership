@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use JobMetric\Layout\Http\Resources\LayoutResource;
 use JobMetric\Membership\Events\MembershipForgetEvent;
 use JobMetric\Membership\Events\MembershipRenewEvent;
 use JobMetric\Membership\Events\MembershipStoredEvent;
@@ -159,10 +158,10 @@ trait HasMember
      * @param Model $person
      * @param string $collection
      *
-     * @return static
+     * @return array
      * @throws Throwable
      */
-    public function forgetMember(Model $person, string $collection): static
+    public function forgetMember(Model $person, string $collection): array
     {
         if (!in_array('JobMetric\Membership\CanMember', class_uses($person))) {
             throw new TraitCanMemberNotFoundInModelException(get_class($person));
@@ -174,15 +173,45 @@ trait HasMember
             throw new MemberCollectionNotAllowedException(self::class, $collection);
         }
 
-        $this->member()->where([
+        $member = MemberModel::query()->where([
             'personable_type' => get_class($person),
             'personable_id' => $person->getKey(),
+            'memberable_type' => self::class,
+            'memberable_id' => $this->getKey(),
+            'collection' => $collection,
+        ])->first();
+
+        if (!$member) {
+            return [
+                'ok' => false,
+                'message' => trans('membership::base.validation.errors'),
+                'errors' => [
+                    trans('membership::base.validation.member_collection_not_found', [
+                        'collection' => $collection
+                    ]),
+                ],
+                'status' => 404,
+            ];
+        }
+
+        $data = MemberResource::make($member);
+
+        MemberModel::query()->where([
+            'personable_type' => get_class($person),
+            'personable_id' => $person->getKey(),
+            'memberable_type' => self::class,
+            'memberable_id' => $this->getKey(),
             'collection' => $collection,
         ])->delete();
 
         event(new MembershipForgetEvent($person, $this, $collection));
 
-        return $this;
+        return [
+            'ok' => true,
+            'message' => trans('membership::base.messages.deleted'),
+            'data' => $data,
+            'status' => 200
+        ];
     }
 
     /**

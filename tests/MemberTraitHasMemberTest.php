@@ -130,6 +130,34 @@ class MemberTraitHasMemberTest extends BaseMember
      */
     public function test_forget(): void
     {
+        $order = $this->addOrder();
+        $user = $this->addUser();
+
+        $memberStore = $order->storeMember($user, 'owner');
+
+        $memberForget = $order->forgetMember($user, 'owner');
+
+        $this->assertIsArray($memberForget);
+        $this->assertTrue($memberForget['ok']);
+        $this->assertEquals($memberForget['message'], trans('membership::base.messages.deleted'));
+        $this->assertEquals(200, $memberForget['status']);
+
+        $this->assertDatabaseMissing('members', [
+            'personable_type' => User::class,
+            'personable_id' => $user->id,
+            'memberable_type' => Order::class,
+            'memberable_id' => $order->id,
+            'collection' => 'owner',
+            'expired_at' => null
+        ]);
+
+        // forget member not found
+        $memberForget = $order->forgetMember($user, 'owner');
+
+        $this->assertIsArray($memberForget);
+        $this->assertFalse($memberForget['ok']);
+        $this->assertEquals($memberForget['message'], trans('membership::base.validation.errors'));
+        $this->assertEquals(404, $memberForget['status']);
     }
 
     /**
