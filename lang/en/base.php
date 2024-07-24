@@ -12,10 +12,6 @@ return [
     |
     */
 
-    'validation' => [
-        'errors' => 'Validation errors occurred.',
-    ],
-
     "exceptions" => [
         'model_member_contract_not_found' => 'Model ":model" not implements "JobMetric\Membership\Contracts\MemberContract" interface!',
         'trait_can_member_not_found_in_model' => 'Trait "JobMetric\Membership\CanMember" not found in model ":model"!',
@@ -23,12 +19,6 @@ return [
         'member_collection_not_allowed' => 'Model ":model" not allowed to have ":collection" collection!',
         'member_collection_type_not_match' => 'The ":collection" type of the ":model" model must be "single" or "multiple"!',
         'member_expired_at_is_past' => 'The given date is ":expired_at", you must enter a time in the future!',
-    ],
-
-    'messages' => [
-        'created' => 'The membership was created successfully.',
-        'updated' => 'The membership was updated successfully.',
-        'deleted' => 'The membership was deleted successfully.',
     ],
 
 ];
