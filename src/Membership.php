@@ -4,6 +4,7 @@ namespace JobMetric\Membership;
 
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use JobMetric\Membership\Events\MembershipRemoveExpiredEvent;
 use JobMetric\Membership\Http\Resources\MemberResource;
 use JobMetric\Membership\Models\Member;
 use Spatie\QueryBuilder\QueryBuilder;
@@ -94,5 +95,31 @@ class Membership
         return MemberResource::collection(
             $this->query($filter, $with)->get()
         );
+    }
+
+    /**
+     * Remove Member has been expired.
+     *
+     * @return bool
+     */
+    public function removeExpiredMember(): bool
+    {
+        $member_expired = Member::query()->where('expired_at', '<', now())->get();
+
+        if ($member_expired) {
+            $member_expired->each(function ($member) {
+                /**
+                 * @var Member $member
+                 */
+                $member->delete();
+
+                event(new MembershipRemoveExpiredEvent($member));
+            });
+
+            return true;
+        }
+
+        return false;
+
     }
 }

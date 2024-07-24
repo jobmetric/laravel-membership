@@ -2,6 +2,7 @@
 
 namespace JobMetric\Membership;
 
+use JobMetric\PackageCore\Exceptions\ConsoleKernelFileNotFoundException;
 use JobMetric\PackageCore\Exceptions\MigrationFolderNotFoundException;
 use JobMetric\PackageCore\Exceptions\RegisterClassTypeNotFoundException;
 use JobMetric\PackageCore\PackageCore;
@@ -15,6 +16,7 @@ class MembershipServiceProvider extends PackageCoreServiceProvider
      * @return void
      * @throws MigrationFolderNotFoundException
      * @throws RegisterClassTypeNotFoundException
+     * @throws ConsoleKernelFileNotFoundException
      */
     public function configuration(PackageCore $package): void
     {
@@ -22,6 +24,8 @@ class MembershipServiceProvider extends PackageCoreServiceProvider
             ->hasConfig()
             ->hasMigration()
             ->hasTranslation()
+            ->hasConsoleKernel()
+            ->registerCommand(Commands\MemberRemove::class)
             ->registerClass('Membership', Membership::class);
     }
 }
