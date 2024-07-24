@@ -133,7 +133,7 @@ class MemberTraitHasMemberTest extends BaseMember
         $order = $this->addOrder();
         $user = $this->addUser();
 
-        $memberStore = $order->storeMember($user, 'owner');
+        $order->storeMember($user, 'owner');
 
         $memberForget = $order->forgetMember($user, 'owner');
 
@@ -165,6 +165,22 @@ class MemberTraitHasMemberTest extends BaseMember
      */
     public function test_has(): void
     {
+        $order = $this->addOrder();
+        $user_1 = $this->addUser();
+
+        $order->storeMember($user_1, 'owner');
+
+        $memberHas = $order->hasMember($user_1, 'owner');
+
+        $this->assertIsBool($memberHas);
+        $this->assertTrue($memberHas);
+
+        $user_2 = $this->addUser();
+
+        $memberHas = $order->hasMember($user_2, 'owner');
+
+        $this->assertIsBool($memberHas);
+        $this->assertFalse($memberHas);
     }
 
     /**
