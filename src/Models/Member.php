@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 use JobMetric\Membership\Events\MemberableResourceEvent;
 use JobMetric\Membership\Events\PersonableResourceEvent;
-use JobMetric\PackageCore\HasDynamicRelations;
+use JobMetric\PackageCore\Models\HasDynamicRelations;
 
 /**
  * JobMetric\Membership\Models\Member
