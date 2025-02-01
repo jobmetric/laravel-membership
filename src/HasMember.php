@@ -101,7 +101,7 @@ trait HasMember
             })->exists()) {
                 return [
                     'ok' => false,
-                    'message' => trans('membership::base.validation.errors'),
+                    'message' => trans('package-core::base.validation.errors'),
                     'errors' => [
                         trans('membership::base.validation.member_collection_exists', [
                             'collection' => $collection
@@ -120,7 +120,7 @@ trait HasMember
             })->exists()) {
                 return [
                     'ok' => false,
-                    'message' => trans('membership::base.validation.errors'),
+                    'message' => trans('package-core::base.validation.errors'),
                     'errors' => [
                         trans('membership::base.validation.member_collection_exists', [
                             'collection' => $collection
@@ -184,7 +184,7 @@ trait HasMember
         if (!$member) {
             return [
                 'ok' => false,
-                'message' => trans('membership::base.validation.errors'),
+                'message' => trans('package-core::base.validation.errors'),
                 'errors' => [
                     trans('membership::base.validation.member_collection_not_found', [
                         'collection' => $collection

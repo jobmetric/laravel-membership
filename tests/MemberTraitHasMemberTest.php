@@ -56,7 +56,7 @@ class MemberTraitHasMemberTest extends BaseMember
 
         $this->assertIsArray($member_2);
         $this->assertFalse($member_2['ok']);
-        $this->assertEquals($member_2['message'], trans('membership::base.validation.errors'));
+        $this->assertEquals($member_2['message'], trans('package-core::base.validation.errors'));
         $this->assertEquals(400, $member_2['status']);
 
         $this->assertDatabaseCount('members', 1);
@@ -66,7 +66,7 @@ class MemberTraitHasMemberTest extends BaseMember
 
         $this->assertIsArray($member_3);
         $this->assertFalse($member_3['ok']);
-        $this->assertEquals($member_3['message'], trans('membership::base.validation.errors'));
+        $this->assertEquals($member_3['message'], trans('package-core::base.validation.errors'));
         $this->assertEquals(400, $member_3['status']);
 
         // store member to the multiple collection
@@ -156,7 +156,7 @@ class MemberTraitHasMemberTest extends BaseMember
 
         $this->assertIsArray($memberForget);
         $this->assertFalse($memberForget['ok']);
-        $this->assertEquals($memberForget['message'], trans('membership::base.validation.errors'));
+        $this->assertEquals($memberForget['message'], trans('package-core::base.validation.errors'));
         $this->assertEquals(404, $memberForget['status']);
     }
 
