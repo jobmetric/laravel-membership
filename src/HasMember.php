@@ -77,7 +77,7 @@ trait HasMember
      * @return array
      * @throws Throwable
      */
-    public function storeMember(Model $person, string $collection, Carbon $expired_at = null): array
+    public function storeMember(Model $person, string $collection, ?Carbon $expired_at = null): array
     {
         if (!in_array('JobMetric\Membership\CanMember', class_uses($person))) {
             throw new TraitCanMemberNotFoundInModelException(get_class($person));
@@ -143,6 +143,9 @@ trait HasMember
         ]);
 
         event(new MembershipStoredEvent($person, $this, $collection, $expired_at));
+        if ($member->exists) {
+            app(\JobMetric\EventSystem\Support\CommittedEventDispatcher::class)->dispatch(new \JobMetric\Membership\Events\Membership\MembershipStoreCommittedEvent($member->personable_type, $member->personable_id, $member->memberable_type, $member->memberable_id, $member->collection), $member->getConnectionName());
+        }
 
         return [
             'ok' => true,
@@ -205,6 +208,9 @@ trait HasMember
         ])->delete();
 
         event(new MembershipForgetEvent($person, $this, $collection));
+        if (! $member->newQuery()->where($member->only(['personable_type', 'personable_id', 'memberable_type', 'memberable_id', 'collection']))->exists()) {
+            app(\JobMetric\EventSystem\Support\CommittedEventDispatcher::class)->dispatch(new \JobMetric\Membership\Events\Membership\MembershipDeleteCommittedEvent($member->personable_type, $member->personable_id, $member->memberable_type, $member->memberable_id, $member->collection), $member->getConnectionName());
+        }
 
         return [
             'ok' => true,
@@ -254,7 +260,7 @@ trait HasMember
      * @return bool
      * @throws Throwable
      */
-    public function renewMember(Model $person, string $collection, Carbon $expired_at = null): bool
+    public function renewMember(Model $person, string $collection, ?Carbon $expired_at = null): bool
     {
         if (!in_array('JobMetric\Membership\CanMember', class_uses($person))) {
             throw new TraitCanMemberNotFoundInModelException(get_class($person));
@@ -270,11 +276,12 @@ trait HasMember
             throw new MemberCollectionNotAllowedException(self::class, $collection);
         }
 
-        if (!$this->member()->where([
+        $outcomeMember = $this->member()->where([
             'personable_type' => get_class($person),
             'personable_id' => $person->getKey(),
             'collection' => $collection,
-        ])->exists()) {
+        ])->first();
+        if (! $outcomeMember) {
             return false;
         }
 
@@ -287,6 +294,9 @@ trait HasMember
         ]);
 
         event(new MembershipRenewEvent($person, $this, $collection, $expired_at));
+        if (($outcomeMember->expired_at?->toDateTimeString()) !== $outcomeMember->newQuery()->where($outcomeMember->only(['personable_type', 'personable_id', 'memberable_type', 'memberable_id', 'collection']))->first()?->expired_at?->toDateTimeString()) {
+            app(\JobMetric\EventSystem\Support\CommittedEventDispatcher::class)->dispatch(new \JobMetric\Membership\Events\Membership\MembershipRenewCommittedEvent($outcomeMember->personable_type, $outcomeMember->personable_id, $outcomeMember->memberable_type, $outcomeMember->memberable_id, $outcomeMember->collection), $outcomeMember->getConnectionName());
+        }
 
         return true;
     }
@@ -301,7 +311,7 @@ trait HasMember
      * @return bool
      * @throws Throwable
      */
-    public function updateExpiredAtMember(Model $person, string $collection, Carbon $expired_at = null): bool
+    public function updateExpiredAtMember(Model $person, string $collection, ?Carbon $expired_at = null): bool
     {
         if (!in_array('JobMetric\Membership\CanMember', class_uses($person))) {
             throw new TraitCanMemberNotFoundInModelException(get_class($person));
@@ -313,11 +323,12 @@ trait HasMember
             throw new MemberCollectionNotAllowedException(self::class, $collection);
         }
 
-        if (!$this->member()->where([
+        $outcomeMember = $this->member()->where([
             'personable_type' => get_class($person),
             'personable_id' => $person->getKey(),
             'collection' => $collection,
-        ])->exists()) {
+        ])->first();
+        if (! $outcomeMember) {
             return false;
         }
 
@@ -330,6 +341,9 @@ trait HasMember
         ]);
 
         event(new MembershipUpdateExpiredAtEvent($person, $this, $collection, $expired_at));
+        if (($outcomeMember->expired_at?->toDateTimeString()) !== $outcomeMember->newQuery()->where($outcomeMember->only(['personable_type', 'personable_id', 'memberable_type', 'memberable_id', 'collection']))->first()?->expired_at?->toDateTimeString()) {
+            app(\JobMetric\EventSystem\Support\CommittedEventDispatcher::class)->dispatch(new \JobMetric\Membership\Events\Membership\MembershipUpdateCommittedEvent($outcomeMember->personable_type, $outcomeMember->personable_id, $outcomeMember->memberable_type, $outcomeMember->memberable_id, $outcomeMember->collection), $outcomeMember->getConnectionName());
+        }
 
         return true;
     }
@@ -343,7 +357,7 @@ trait HasMember
      * @return AnonymousResourceCollection
      * @throws Throwable
      */
-    public function getPerson(string $collection = null, bool $is_expired = false): AnonymousResourceCollection
+    public function getPerson(?string $collection = null, bool $is_expired = false): AnonymousResourceCollection
     {
         $allowMemberCollection = $this->allowMemberCollection();
 

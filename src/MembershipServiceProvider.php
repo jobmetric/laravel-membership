@@ -28,4 +28,20 @@ class MembershipServiceProvider extends PackageCoreServiceProvider
             ->registerCommand(Commands\MemberRemove::class)
             ->registerClass('Membership', Membership::class);
     }
+    /**
+     * Register committed business outcome definitions alongside legacy events.
+     *
+     * @return void
+     */
+    public function afterBootPackage(): void
+    {
+        if ($this->app->bound('EventRegistry')) {
+            $registry = $this->app->make('EventRegistry');
+            $registry->register(\JobMetric\Membership\Events\Membership\MembershipStoreCommittedEvent::class);
+            $registry->register(\JobMetric\Membership\Events\Membership\MembershipDeleteCommittedEvent::class);
+            $registry->register(\JobMetric\Membership\Events\Membership\MembershipRenewCommittedEvent::class);
+            $registry->register(\JobMetric\Membership\Events\Membership\MembershipUpdateCommittedEvent::class);
+            $registry->register(\JobMetric\Membership\Events\Membership\MembershipExpireCommittedEvent::class);
+        }
+    }
 }

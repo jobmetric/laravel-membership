@@ -15,7 +15,7 @@ class MembershipStoredEvent
     /**
      * Create a new event instance.
      */
-    public function __construct(Model $person, Model $memberable, string $collection, Carbon $expired_at = null)
+    public function __construct(Model $person, Model $memberable, string $collection, ?Carbon $expired_at = null)
     {
         $this->person = $person;
         $this->memberable = $memberable;

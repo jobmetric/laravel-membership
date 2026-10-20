@@ -24,10 +24,11 @@
         }
     ],
     "require": {
-        "php": ">=8.0.1",
+        "php": ">=8.2",
         "laravel/framework": ">=9.19",
         "jobmetric/laravel-package-core": "^1.7",
-        "spatie/laravel-query-builder": "^6.3"
+        "spatie/laravel-query-builder": "^6.3",
+        "jobmetric/laravel-event-system": "^2.10"
     },
     "require-dev": {
         "phpunit/phpunit": "^10.1"

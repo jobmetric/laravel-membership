@@ -120,6 +120,7 @@ class Membership
                 ])->delete();
 
                 event(new MembershipRemoveExpiredEvent($member));
+                app(\JobMetric\EventSystem\Support\CommittedEventDispatcher::class)->dispatch(new \JobMetric\Membership\Events\Membership\MembershipExpireCommittedEvent($member->personable_type, $member->personable_id, $member->memberable_type, $member->memberable_id, $member->collection), $member->getConnectionName());
             });
 
             return true;
